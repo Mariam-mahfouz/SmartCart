@@ -8,6 +8,7 @@ import {
   FaLock,
 } from "react-icons/fa";
 import axios from "axios";
+import { API_BASE_URL } from "../../../config/api";
 
 export default function Login() {
   const [fullName, setFullName] = useState("");
@@ -20,13 +21,10 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await axios.post(
-        "http://localhost:5280/api/auth/login",
-        {
-          fullName,
-          password,
-        }
-      );
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+        fullName,
+        password,
+      });
 
       setMessage(res.data.message || "Login successful");
 
@@ -39,7 +37,6 @@ export default function Login() {
       // SIMPLE ROLE LOGIC (SAFE)
       // =========================
 
-      // 👇 fallback role system (because backend doesn't guarantee role)
       let role = res.data.role;
 
       if (!role) {

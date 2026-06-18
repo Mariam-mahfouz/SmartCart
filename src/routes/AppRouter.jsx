@@ -18,6 +18,7 @@ import Payment from "../features/customer/Payment";
 import Success from "../features/customer/Success";
 
 // Admin Pages
+import UploadData from "../features/admin/pages/UploadData.jsx";
 import AdminLogin from "../features/admin/pages/login";
 import AdminDashboard from "../features/admin/pages/Dashboard";
 import Orders from "../features/admin/pages/Orders";
@@ -71,6 +72,7 @@ const AppRouter = () => {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="orders" element={<Orders />} />
           <Route path="products" element={<Products />} />
+          <Route path="upload-products" element={<UploadData />} />
           <Route path="users" element={<Users />} />
           <Route path="analytics" element={<Analytics />} />
         </Route>

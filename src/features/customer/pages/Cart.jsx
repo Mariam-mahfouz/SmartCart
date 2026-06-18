@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { productsCatalog } from "../../../Data/products";
 import axios from "axios";
+import { API_BASE_URL } from "../../../config/api";
 import {
-    ShoppingCart,
-    ScanLine,
-    CreditCard,
-  } from "lucide-react";
+  ShoppingCart,
+  ScanLine,
+  CreditCard,
+} from "lucide-react";
 
 export default function SmartCart() {
   const [cartItems, setCartItems] = useState([]);
@@ -14,7 +16,6 @@ export default function SmartCart() {
   useEffect(() => {
     fetchCart();
 
-    // تحديث تلقائي كل ثانيتين
     const interval = setInterval(() => {
       fetchCart();
     }, 2000);
@@ -22,24 +23,43 @@ export default function SmartCart() {
     return () => clearInterval(interval);
   }, []);
 
-  // GET CART ITEMS
+  // ✅ FIXED FETCH + NORMALIZATION
   const fetchCart = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5280/api/cart/items"
-      );
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API_BASE_URL}/api/cart`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
-      setCartItems(response.data);
+      const data = response.data;
+      const items = data.cart?.items || data.items || [];
+
+      const itemsArray = (Array.isArray(items) ? items : Object.entries(items))
+        .map((entry) => {
+          const item = Array.isArray(entry) ? entry[1] : entry;
+          const key = Array.isArray(entry) ? entry[0] : item.id;
+
+          return {
+            id: key,
+            name: item.name || item.productName,
+            price: item.price || item.unitPrice || 0,
+            weight_g: item.weight_g || item.weightInGrams || 0,
+            quantity: item.quantity || 1,
+            weightPrice: item.weightPrice || 0,
+          };
+        })
+        .filter((item) => item.name);
+
+      setCartItems(itemsArray);
     } catch (error) {
       console.log("Error fetching cart:", error);
     }
   };
 
-  // TOTAL PRICE
   const total = cartItems.reduce(
     (sum, item) =>
       sum +
-      (item.baseUnitPrice || 0) +
+      (item.price || 0) +
       (item.weightPrice || 0),
     0
   );
@@ -72,49 +92,60 @@ export default function SmartCart() {
             </div>
 
             <div className="space-y-6">
-              {cartItems.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between border-b pb-6"
-                >
-                  {/* Left */}
-                  <div className="flex items-center gap-5">
+              {cartItems.map((item) => {
 
-                    <img
-                      src={item.imageUrl}
-                      alt={item.productName}
-                      className="w-28 h-28 object-cover rounded-xl border"
-                    />
+                const key = item.name?.toLowerCase().trim();
 
-                    <div>
-                      <h2 className="text-lg font-medium max-w-md">
-                        {item.productName}
-                      </h2>
+                const imageSrc =
+                  productsCatalog[key] || "/images/placeholder.png";
 
-                      <p className="text-gray-500 mt-2">
-                        Weight: {item.weightInGrams} g
-                      </p>
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between border-b pb-6"
+                  >
+                    {/* Left */}
+                    <div className="flex items-center gap-5">
 
-                      <p className="text-gray-500">
-                        Unit Price: ${item.baseUnitPrice}
-                      </p>
+                      {/* IMAGE FIXED */}
+                      <img
+                        src={imageSrc}
+                        alt={item.name}
+                        className="w-28 h-28 object-cover rounded-xl border"
+                        onError={(e) => {
+                          e.target.src = "/images/placeholder.png";
+                        }}
+                      />
 
-                      <p className="text-gray-500">
-                        Weight Price: ${item.weightPrice}
-                      </p>
+                      <div>
+                        <h2 className="text-lg font-medium max-w-md">
+                          {item.name}
+                        </h2>
+
+                        <p className="text-gray-500 mt-2">
+                          Weight: {item.weight_g} g
+                        </p>
+
+                        <p className="text-gray-500">
+                          Unit Price: ${item.price}
+                        </p>
+
+                        <p className="text-gray-500">
+                          Quantity: {item.quantity}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Total */}
+                    <div className="text-xl font-semibold">
+                      ${(
+                        (item.price || 0) +
+                        (item.weightPrice || 0)
+                      ).toFixed(2)}
                     </div>
                   </div>
-
-                  {/* Total */}
-                  <div className="text-xl font-semibold">
-                    $
-                    {(
-                      (item.baseUnitPrice || 0) +
-                      (item.weightPrice || 0)
-                    ).toFixed(2)}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -136,26 +167,24 @@ export default function SmartCart() {
                 title="Total Weight"
                 value={
                   cartItems.reduce(
-                    (sum, item) =>
-                      sum + item.weightInGrams,
+                    (sum, item) => sum + item.weight_g,
                     0
                   ) + " g"
                 }
               />
             </div>
 
-            {/* TOTAL */}
             <div className="flex justify-between py-8 text-2xl font-bold">
               <span>Total</span>
-
               <span>${total.toFixed(2)}</span>
             </div>
+
             <button
-  onClick={() => navigate("/payment")}
-  className="w-full bg-[#f39a2b] hover:bg-[#e48b1e] text-white py-4 rounded-2xl font-semibold text-lg"
->
-  Confirm and Pay
-</button>
+              onClick={() => navigate("/payment")}
+              className="w-full bg-[#f39a2b] hover:bg-[#e48b1e] text-white py-4 rounded-2xl font-semibold text-lg"
+            >
+              Confirm and Pay
+            </button>
           </div>
         </div>
       </div>
@@ -163,6 +192,7 @@ export default function SmartCart() {
   );
 }
 
+// Steps UI
 function Step({ icon, title, active }) {
   return (
     <div className="flex items-center gap-3">
@@ -181,6 +211,7 @@ function Step({ icon, title, active }) {
   );
 }
 
+// Row UI
 function Row({ title, value }) {
   return (
     <div className="flex justify-between text-lg">

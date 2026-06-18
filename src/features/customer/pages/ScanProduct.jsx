@@ -1,46 +1,58 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { ref, onValue } from "firebase/database";
+import { database } from "../../../firebase";
 import {
-    ShoppingCart,
-    ScanLine,
-    CreditCard,
-  } from "lucide-react";
+  ShoppingCart,
+  ScanLine,
+  CreditCard,
+} from "lucide-react";
 
 export default function SmartCart() {
   const [cartItems, setCartItems] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchCart();
+    const cartRef = ref(database, "cart");
 
-    // تحديث تلقائي كل ثانيتين
-    const interval = setInterval(() => {
-      fetchCart();
-    }, 2000);
+    const unsubscribe = onValue(cartRef, (snapshot) => {
+      const data = snapshot.val();
 
-    return () => clearInterval(interval);
+      console.log("RAW DATA:", data);
+
+      if (!data?.items) {
+        setCartItems([]);
+        return;
+      }
+
+      const loadedItems = Object.entries(data.items)
+        .map(([key, item]) => {
+          // ❗ تنظيف الاسم عشان الصور تشتغل في Vite + Firebase
+          const safeName = item.name
+            ?.toLowerCase()
+            .trim()
+            .replace(/\s+/g, "_");
+
+          return {
+            id: key,
+            productName: item.name,
+            baseUnitPrice: item.price,
+            weightInGrams: item.weight_g || 0,
+            quantity: item.quantity || 1,
+            total: item.total || item.price,
+            imageUrl: `/images/${safeName}.png`,
+          };
+        })
+        .filter((item) => item.productName); // remove garbage items
+
+      setCartItems(loadedItems);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  // GET CART ITEMS
-  const fetchCart = async () => {
-    try {
-      const response = await axios.get(
-        "http://localhost:5280/api/cart/items"
-      );
-
-      setCartItems(response.data);
-    } catch (error) {
-      console.log("Error fetching cart:", error);
-    }
-  };
-
-  // TOTAL PRICE
   const total = cartItems.reduce(
-    (sum, item) =>
-      sum +
-      (item.baseUnitPrice || 0) +
-      (item.weightPrice || 0),
+    (sum, item) => sum + (item.total || 0),
     0
   );
 
@@ -72,18 +84,22 @@ export default function SmartCart() {
             </div>
 
             <div className="space-y-6">
-              {cartItems.map((item, index) => (
+              {cartItems.map((item) => (
                 <div
-                  key={index}
+                  key={item.id}
                   className="flex items-center justify-between border-b pb-6"
                 >
                   {/* Left */}
                   <div className="flex items-center gap-5">
 
+                    {/* IMAGE FIXED */}
                     <img
                       src={item.imageUrl}
                       alt={item.productName}
                       className="w-28 h-28 object-cover rounded-xl border"
+                      onError={(e) => {
+                        e.target.src = "/images/placeholder.png";
+                      }}
                     />
 
                     <div>
@@ -100,18 +116,14 @@ export default function SmartCart() {
                       </p>
 
                       <p className="text-gray-500">
-                        Weight Price: ${item.weightPrice}
+                        Quantity: {item.quantity}
                       </p>
                     </div>
                   </div>
 
                   {/* Total */}
                   <div className="text-xl font-semibold">
-                    $
-                    {(
-                      (item.baseUnitPrice || 0) +
-                      (item.weightPrice || 0)
-                    ).toFixed(2)}
+                    ${(item.total || 0).toFixed(2)}
                   </div>
                 </div>
               ))}
@@ -136,26 +148,24 @@ export default function SmartCart() {
                 title="Total Weight"
                 value={
                   cartItems.reduce(
-                    (sum, item) =>
-                      sum + item.weightInGrams,
+                    (sum, item) => sum + item.weightInGrams,
                     0
                   ) + " g"
                 }
               />
             </div>
 
-            {/* TOTAL */}
             <div className="flex justify-between py-8 text-2xl font-bold">
               <span>Total</span>
-
               <span>${total.toFixed(2)}</span>
             </div>
+
             <button
-  onClick={() => navigate("/payment")}
-  className="w-full bg-[#f39a2b] hover:bg-[#e48b1e] text-white py-4 rounded-2xl font-semibold text-lg"
->
-  Confirm and Pay
-</button>
+              onClick={() => navigate("/payment")}
+              className="w-full bg-[#f39a2b] hover:bg-[#e48b1e] text-white py-4 rounded-2xl font-semibold text-lg"
+            >
+              Confirm and Pay
+            </button>
           </div>
         </div>
       </div>
@@ -175,7 +185,6 @@ function Step({ icon, title, active }) {
       >
         {icon}
       </div>
-
       <span className="font-medium">{title}</span>
     </div>
   );

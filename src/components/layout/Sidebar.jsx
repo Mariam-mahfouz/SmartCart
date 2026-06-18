@@ -51,6 +51,16 @@ const Sidebar = () => {
           <Package size={18} />
           Products
         </NavLink>
+        <NavLink
+                to="/admin/upload-products"
+                 className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-lg text-sm
+                ${isActive ? "bg-slate-800 text-white" : "text-gray-400 hover:bg-slate-800"}`
+  }
+>
+  <Package size={18} />
+  Upload Products
+</NavLink>
 
         <NavLink
           to="/admin/users"

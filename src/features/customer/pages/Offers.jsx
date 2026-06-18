@@ -92,7 +92,7 @@ export default function Offers() {
                       {finalPrice.toFixed(2)} CFA
                     </p>
                     <p className="text-xs text-gray-400 line-through">
-                      {item.price} CFA
+                      {item.price} EGP
                     </p>
                   </div>
                 </div>

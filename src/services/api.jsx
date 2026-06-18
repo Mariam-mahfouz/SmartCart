@@ -1,7 +1,10 @@
-import axios from "axios";
+export const BASE_URL = "https://cartshop1-production.up.railway.app";
 
-const API = axios.create({
-  baseURL: "http://localhost:5280",
-});
+export function getAuthHeader() {
+  const token = localStorage.getItem("token");
 
-export default API;
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+}

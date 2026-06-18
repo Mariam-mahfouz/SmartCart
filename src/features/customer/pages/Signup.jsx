@@ -8,7 +8,7 @@ import {
   FaEnvelope,
   FaLock,
 } from "react-icons/fa";
-import API from "../../../services/api";
+import axios from "axios";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -16,35 +16,58 @@ export default function Signup() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    // ✅ validation
+    // ❌ منع تكرار الإرسال
+    if (loading) return;
+
+    // start loading
+    setLoading(true);
+    setMessage("");
+
+    // validation
     if (password !== confirmPassword) {
       setMessage("Passwords do not match");
+      setLoading(false);
       return;
     }
 
     try {
-      const res = await API.post("/api/auth/register", {
-        fullName: name,
-        email: email,
-        password: password,
-        confirmPassword: confirmPassword,
-      });
+      const res = await axios.post(
+        "https://cartshop1-production.up.railway.app/api/auth/register",
+        {
+          fullName: name,
+          email,
+          password,
+          confirmPassword,
+        }
+      );
 
-console.log("STATUS:", res.status);
-console.log("DATA:", res.data);
+      console.log("STATUS:", res.status);
+      console.log("DATA:", res.data);
 
-      setMessage(res.data.message);
+      setMessage(res.data.message || "Account created successfully");
 
+      // redirect after success
       setTimeout(() => {
         navigate("/login");
-      }, 1500);
+      }, 1200);
+
     } catch (err) {
-      setMessage(err.response?.data?.message || "Signup failed");
+      console.log(err);
+
+      setMessage(
+        err.response?.data?.message ||
+        err.response?.data?.title ||
+        "Signup failed"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,6 +93,7 @@ console.log("DATA:", res.data);
 
         {/* Form */}
         <form className="space-y-4 text-left" onSubmit={handleSignup}>
+
           {/* Name */}
           <div className="relative">
             <FaUser className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-400 text-sm" />
@@ -125,15 +149,16 @@ console.log("DATA:", res.data);
           {/* Button */}
           <button
             type="submit"
-            className="w-full mt-6 py-3 rounded-full bg-orange-400 text-white font-semibold shadow-md hover:bg-orange-500 transition"
+            disabled={loading}
+            className="w-full mt-6 py-3 rounded-full bg-orange-400 text-white font-semibold shadow-md hover:bg-orange-500 transition disabled:opacity-50"
           >
-            Sign up
+            {loading ? "Creating account..." : "Sign up"}
           </button>
         </form>
 
         {/* Message */}
         {message && (
-          <p className="text-red-500 mt-2 text-sm">{message}</p>
+          <p className="text-red-500 mt-3 text-sm">{message}</p>
         )}
 
         {/* Login link */}
