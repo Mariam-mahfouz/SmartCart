@@ -1,60 +1,38 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React from "react";
 
 const Users = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      const res = await axios.get(
-        "https://cartshop1-production.up.railway.app/api/orders"
-      );
-
-      const orders = res.data || [];
-
-      const uniqueUsers = [];
-
-      orders.forEach((order) => {
-        const email =
-          order.email || order.customerEmail || order.userEmail;
-        const name =
-          order.customerName || order.fullName || order.name;
-
-        if (!email) return;
-
-        const exists = uniqueUsers.find((u) => u.email === email);
-
-        if (!exists) {
-          uniqueUsers.push({
-            name: name || "Unknown",
-            email: email,
-          });
-        }
-      });
-
-      setUsers(uniqueUsers);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return <div className="p-6">Loading...</div>;
-  }
+  const users = [
+    {
+      name: "Ahmed Mohamed",
+      email: "ahmed@gmail.com",
+    },
+    {
+      name: "Mariam Ahmed",
+      email: "mariam@gmail.com",
+    },
+    {
+      name: "Omar Ali",
+      email: "omar@gmail.com",
+    },
+    {
+      name: "Fatma Hassan",
+      email: "fatma@gmail.com",
+    },
+    {
+      name: "Youssef Khaled",
+      email: "youssef@gmail.com",
+    },
+    {
+      name: "Nour Ibrahim",
+      email: "nour@gmail.com",
+    },
+  ];
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
 
-      {/* HEADER */}
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">
-        Users Management
+      <h1 className="text-2xl font-bold mb-6">
+        Users Management (Demo Data)
       </h1>
 
       {/* CARD */}
@@ -71,31 +49,23 @@ const Users = () => {
 
           <thead className="bg-orange-100">
             <tr>
-              <th className="text-left p-4">#</th>
-              <th className="text-left p-4">Name</th>
-              <th className="text-left p-4">Email</th>
+              <th className="p-4 text-left">#</th>
+              <th className="p-4 text-left">Name</th>
+              <th className="p-4 text-left">Email</th>
             </tr>
           </thead>
 
           <tbody>
-            {users.length === 0 ? (
-              <tr>
-                <td colSpan="3" className="p-6 text-center text-gray-500">
-                  No users found
-                </td>
+            {users.map((user, index) => (
+              <tr
+                key={index}
+                className="border-b hover:bg-gray-50"
+              >
+                <td className="p-4">{index + 1}</td>
+                <td className="p-4 font-medium">{user.name}</td>
+                <td className="p-4 text-gray-600">{user.email}</td>
               </tr>
-            ) : (
-              users.map((user, index) => (
-                <tr
-                  key={index}
-                  className="border-b hover:bg-gray-50 transition"
-                >
-                  <td className="p-4 text-gray-600">{index + 1}</td>
-                  <td className="p-4 font-medium">{user.name}</td>
-                  <td className="p-4 text-gray-600">{user.email}</td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
 
         </table>
