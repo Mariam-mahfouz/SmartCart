@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -10,19 +9,21 @@ const AdminLogin = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 👇 hidden admin entry (5 clicks)
+  // hidden admin entry (5 clicks)
   const [clicks, setClicks] = useState(0);
 
   const handleLogoClick = () => {
-    setClicks((prev) => prev + 1);
+    const newClicks = clicks + 1;
+    setClicks(newClicks);
 
     setTimeout(() => setClicks(0), 1500);
 
-    if (clicks + 1 === 5) {
+    if (newClicks === 5) {
       const passkey = prompt("Enter admin passkey:");
 
       if (passkey === "admin123") {
         localStorage.setItem("role", "Admin");
+        localStorage.setItem("token", "admin-token");
         navigate("/admin/dashboard");
       } else {
         alert("Wrong passkey");
@@ -30,51 +31,30 @@ const AdminLogin = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     setError("");
     setLoading(true);
 
+    const ADMIN_USERNAME = "admin1";
+    const ADMIN_PASSWORD = "admin123";
+
     try {
-      const res = await axios.post(
-        "http://localhost:5280/api/auth/login",
-        {
-          fullName,
-          password,
-        }
-      );
-
-      if (res.data.success) {
-        // =========================
-        // SIMPLE FRONTEND ADMIN CHECK
-        // =========================
-
-        let role = res.data.role;
-
-        // fallback (because backend may not send role)
-        if (!role) {
-          role = fullName === "admin1" ? "Admin" : "User";
-        }
-
-        if (role !== "Admin") {
-          setError("You are not authorized as admin");
-          setLoading(false);
-          return;
-        }
-
-        // save auth data
-        localStorage.setItem("token", res.data.token);
+      // 🔥 Admin check (Frontend only)
+      if (
+        fullName === ADMIN_USERNAME &&
+        password === ADMIN_PASSWORD
+      ) {
         localStorage.setItem("role", "Admin");
+        localStorage.setItem("token", "admin-token");
 
         navigate("/admin/dashboard");
-      } else {
-        setError(res.data.message || "Invalid admin credentials");
+        return;
       }
-    } catch (err) {
-      setError(
-        err.response?.data?.message || "Invalid admin credentials"
-      );
+
+      // ❌ لو مش Admin
+      setError("Invalid admin credentials");
     } finally {
       setLoading(false);
     }
@@ -84,7 +64,7 @@ const AdminLogin = () => {
     <div className="min-h-screen flex items-center justify-center bg-[#FFF6EF] px-4">
       <div className="w-full max-w-md bg-[#FFF6EF] rounded-3xl shadow-xl p-6 sm:p-8 text-center">
 
-        {/* LOGO (hidden admin trigger) */}
+        {/* LOGO */}
         <div className="flex justify-center mb-4">
           <img
             src="/logo.jpg"
