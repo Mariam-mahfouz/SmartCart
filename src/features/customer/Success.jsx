@@ -1,10 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
+  const { state } = useLocation();
 
-  const order = {
+  const order = state || {
     transactionId: "TXN-847392",
     amount: 150.75,
     date: new Date().toLocaleDateString(),
@@ -13,11 +14,14 @@ export default function PaymentSuccess() {
   const downloadInvoice = () => {
     const invoice = `
 SMART CART INVOICE
+=========================
 
-Transaction ID: ${order.transactionId}
-Amount Paid: $${order.amount}
-Date: ${order.date}
-Status: SUCCESS
+Transaction ID : ${order.transactionId}
+Amount Paid    : $${order.amount}
+Date           : ${order.date}
+Status         : SUCCESS
+
+Thank you for shopping with Smart Cart!
 `;
 
     const blob = new Blob([invoice], { type: "text/plain" });
@@ -25,7 +29,7 @@ Status: SUCCESS
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "invoice.txt";
+    a.download = `invoice-${order.transactionId}.txt`;
     a.click();
 
     URL.revokeObjectURL(url);
@@ -34,83 +38,143 @@ Status: SUCCESS
   return (
     <div className="min-h-screen bg-pink-50 flex items-center justify-center px-4 py-6">
 
-      {/* Container */}
-      <div className="
-        w-full 
-        max-w-sm 
-        sm:max-w-md 
-        md:max-w-lg 
-        lg:max-w-xl
-        bg-white 
-        rounded-3xl 
-        shadow-lg 
-        sm:shadow-xl 
-        md:shadow-2xl
-        overflow-hidden
-        flex 
-        flex-col
-      ">
+      <div
+        className="
+          w-full
+          max-w-sm
+          sm:max-w-md
+          md:max-w-lg
+          bg-white
+          rounded-3xl
+          shadow-2xl
+          overflow-hidden
+        "
+      >
 
         {/* Header */}
-        <div className="flex items-center justify-start p-4 sm:p-5">
+        <div className="p-4">
           <button
             onClick={() => navigate("/")}
-            className="w-10 h-10 sm:w-11 sm:h-11 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition"
+            className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition"
           >
             <ArrowLeft size={18} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex flex-col items-center text-center px-6 sm:px-10 pb-10">
+        <div className="px-6 pb-8 flex flex-col items-center text-center">
 
-          {/* Image */}
-          <div className="w-44 sm:w-56 md:w-64 lg:w-72 flex justify-center">
-            <img
-              src="/payment-success.png"
-              alt="success"
-              className="w-full object-contain"
-            />
+          {/* Success Icon */}
+          <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
+            <span className="text-5xl text-green-500">✓</span>
           </div>
 
           {/* Title */}
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mt-6">
-            Payment result!
+          <h2 className="text-2xl font-bold text-gray-800 mt-6">
+            Payment Successful
           </h2>
 
           {/* Description */}
-          <p className="text-gray-500 text-xs sm:text-sm md:text-base leading-6 mt-3 max-w-md">
-            We will send your order details to your email address after successful payment.
+          <p className="text-gray-500 text-sm leading-6 mt-3 max-w-md">
+            Your payment has been completed successfully.
+            We will send your order details to your email address shortly.
           </p>
 
-          {/* Details button */}
-          <button
-            onClick={() => navigate("/order-details")}
-            className="mt-6 text-green-500 font-medium flex items-center gap-2 hover:gap-3 transition"
-          >
-            See details <span>→</span>
-          </button>
+          {/* Order Details */}
+          <div className="mt-6 w-full bg-gray-50 rounded-2xl p-5">
 
-          {/* Primary button */}
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">
+                Transaction ID
+              </span>
+
+              <span className="font-semibold text-gray-800">
+                {order.transactionId}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-gray-500">
+                Amount
+              </span>
+
+              <span className="font-semibold text-gray-800">
+                ${order.amount}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-gray-500">
+                Date
+              </span>
+
+              <span className="font-semibold text-gray-800">
+                {order.date}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-gray-500">
+                Status
+              </span>
+
+              <span className="font-semibold text-green-500">
+                SUCCESS
+              </span>
+            </div>
+
+          </div>
+
+          {/* Download Invoice */}
           <button
             onClick={downloadInvoice}
             className="
-              mt-8 
-              w-full 
-              sm:w-[90%] 
-              md:w-[80%]
-              bg-orange-500 
-              hover:bg-orange-600 
-              text-white 
-              py-3 sm:py-4 
-              rounded-2xl 
-              font-semibold 
-              shadow-md 
+              mt-8
+              w-full
+              bg-orange-500
+              hover:bg-orange-600
+              text-white
+              py-3
+              rounded-2xl
+              font-semibold
+              shadow-md
               transition
-              text-sm sm:text-base
             "
           >
-            Download the invoice
+            Download Invoice
+          </button>
+
+          {/* View Details */}
+          <button
+            onClick={() => navigate("/order-details")}
+            className="
+              mt-4
+              w-full
+              border
+              border-orange-500
+              text-orange-500
+              hover:bg-orange-50
+              py-3
+              rounded-2xl
+              font-semibold
+              transition
+            "
+          >
+            View Order Details
+          </button>
+
+          {/* Back Home */}
+          <button
+            onClick={() => navigate("/")}
+            className="
+              mt-5
+              text-sm
+              text-gray-500
+              hover:text-black
+              transition
+            "
+          >
+            Back to Home
           </button>
 
         </div>
